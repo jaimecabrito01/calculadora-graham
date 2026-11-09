@@ -1,0 +1,6 @@
+# artefatos de build locais
+node_modules/
+dist/
+.env
+*.log
+.idea/

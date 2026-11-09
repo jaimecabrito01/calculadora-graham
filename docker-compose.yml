@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: graham
+      POSTGRES_PASSWORD: graham
+      POSTGRES_DB: graham
+    ports:
+      - "5433:5432" # host 5433 (5432 pode estar ocupado); dentro da rede é 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graham -d graham"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    ports:
+      - "8090:8080" # host 8090 (8080 ocupado na máquina)
+    env_file: ./backend/.env
+    environment:
+      # dentro da rede do compose o PG é "db", não localhost
+      DATABASE_URL: postgres://graham:graham@db:5432/graham?sslmode=disable
+      PORT: "8080"
+      CVM_CACHE_DIR: /app/data
+    volumes:
+      # volume nomeado (dono = app no container); bind do host quebra por permissão
+      - cvmdata:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  front:
+    build: ./frontend
+    ports:
+      - "${FRONTEND_PORT:-5174}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  cvmdata:
