@@ -73,7 +73,7 @@ go run ./cmd/api                      # de backend/ — .env de backend/ é lido
 
 ## CI/CD (GitHub Actions)
 
-- Workflow `.github/workflows/ci-cd.yml`: PR → `go build/vet/test` + `npm run build` (ubuntu-latest); push `main`/manual → mesmos checks e deploy no runner self-hosted (labels via var `RUNNER_LABELS`, default `self-hosted,linux,calculadora-graham`).
+- Workflow `.github/workflows/ci-cd.yml`: PR → `go build/vet/test` + `npm run build` (ubuntu-latest); push `main`/manual → mesmos checks e deploy no runner self-hosted (labels via var `RUNNER_LABELS`, default `self-hosted,linux`).
 - Deploy `.github/scripts/deploy.sh`: `git archive HEAD` → `$DEPLOY_DIR/releases/<sha>`, gera `backend/.env` dos secrets, `docker compose build` + `up -d --no-build --wait`, healthcheck `:8090/healthz` + `:5174`, rollback para `last_good_tag`. Não usa registry/SSH.
 - Invariantes: `COMPOSE_PROJECT_NAME` fixo em `calculadora-graham` (senão cria volumes novos e "perde" o banco); `image:` das services usa `${IMAGE_TAG:-latest}` (deploy usa o SHA); nunca `down -v`; não podar imagens usadas no rollback. `.env` nunca entra no `git archive` porque não é rastreado.
 - Schema: migrations são `CREATE/ALTER ... IF NOT EXISTS` no boot — rollback de imagem funciona com schema mais novo; não renomeie/remova colunas sem plano.

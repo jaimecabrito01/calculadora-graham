@@ -80,14 +80,14 @@ O deploy (`.github/scripts/deploy.sh`) extrai o commit para `releases/<sha>` (s�
 
 | Variable | Obrigatório | Uso |
 |---|---|---|
-| `RUNNER_LABELS` | não | JSON, default `["self-hosted","linux","calculadora-graham"]` |
+| `RUNNER_LABELS` | não | JSON, default `["self-hosted","linux"]`; ex. `["self-hosted","linux","graham"]` |
 | `DEPLOY_DIR` | não | default `~/calculadora-graham` no runner |
 | `APP_URL` | não | URL exibida no environment `deployment` |
 
 ### Pré-requisitos na VM
 
 - Docker Engine + Compose v2 e o usuário do runner no grupo `docker`.
-- Runner self-hosted registrado com as labels acima (ou ajuste `RUNNER_LABELS`).
+- Runner self-hosted registrado com as labels `self-hosted` e `linux` (padrão de qualquer runner Linux); para exigir uma label específica, defina `RUNNER_LABELS`.
 - `DEPLOY_DIR` gravável pelo usuário do runner; portas 8090/5174/5433 livres.
 - Primeiro deploy baixa as imagens base (Go, Node, Nginx, Postgres) e reconstrói tudo.
 

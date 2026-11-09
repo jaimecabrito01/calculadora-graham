@@ -51,7 +51,7 @@ jobs:
     name: Deploy (runner self-hosted)
     needs: [backend, frontend]
     if: github.event_name != 'pull_request'
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","linux","calculadora-graham"]') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","linux"]') }}
     environment:
       name: deployment
       url: ${{ vars.APP_URL || '' }}
