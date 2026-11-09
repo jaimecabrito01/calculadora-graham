@@ -58,6 +58,41 @@ docker compose exec backend /bin/calc-sync -listar
 docker compose exec backend /bin/calc-sync -promote PETR4=33000167000101
 ```
 
+## CI/CD (GitHub Actions)
+
+`.github/workflows/ci-cd.yml`:
+
+- **Pull request para `main`**: `go build/vet/test` (em `backend/`) e `npm run build` (em `frontend/`) em `ubuntu-latest`. Nada de deploy em PR.
+- **Push em `main`**: os mesmos checks e, se passarem, deploy no **runner self-hosted** da VM.
+- **Manual**: `workflow_dispatch`.
+
+O deploy (`.github/scripts/deploy.sh`) extrai o commit para `releases/<sha>` (só arquivos rastreados), gera `backend/.env` a partir dos secrets, constrói com tag = SHA, sobe com `docker compose up -d --no-build --wait` e valida `:8090/healthz` + `:5174/`. Em falha, volta para a última release boa (`last_good_tag`). Volumes, banco e cache CVM ficam fora do checkout; o nome do projeto Compose é fixado em `calculadora-graham` para reaproveitar `pgdata`/`cvmdata`.
+
+### Secrets (environment `deployment`)
+
+| Secret | Obrigatório | Uso |
+|---|---|---|
+| `BRAPI_API_KEY` | sim | grava em `backend/.env` (chave da brapi) |
+| `POSTGRES_PASSWORD` | não | default `graham`. Só vale em volume novo; trocar depois exige `ALTER USER` no banco |
+| `BRAPI_URL` | não | default `https://brapi.dev/api` (só para testes) |
+
+### Variables
+
+| Variable | Obrigatório | Uso |
+|---|---|---|
+| `RUNNER_LABELS` | não | JSON, default `["self-hosted","linux","calculadora-graham"]` |
+| `DEPLOY_DIR` | não | default `~/calculadora-graham` no runner |
+| `APP_URL` | não | URL exibida no environment `deployment` |
+
+### Pré-requisitos na VM
+
+- Docker Engine + Compose v2 e o usuário do runner no grupo `docker`.
+- Runner self-hosted registrado com as labels acima (ou ajuste `RUNNER_LABELS`).
+- `DEPLOY_DIR` gravável pelo usuário do runner; portas 8090/5174/5433 livres.
+- Primeiro deploy baixa as imagens base (Go, Node, Nginx, Postgres) e reconstrói tudo.
+
+Recomendado: em Settings → Branches, exigir os checks **Backend (vet + testes)** e **Frontend (build)** em PRs para `main`.
+
 ## API
 
 | Rota | Descrição |

@@ -71,6 +71,14 @@ go run ./cmd/api                      # de backend/ — .env de backend/ é lido
 - Boot do `cmd/api`: `run(ctx, db, !SincronizadoRecentemente)` (sync só se o banco está sem dados recentes) e ticker semanal roda com `true`. Já houve inversão desse flag (boot sempre sincronizava e o semanal nunca) — não reintroduzir.
 - Tests: CVM parser com fixtures latin-1 zipados (`criaZipLatino`); handler via interface `FonteCVM` (fake `dbFixa`); brapi 403-fallback testado. **Não** depender de CVM real no unit (com E2E manual via `cmd/sync`).
 
+## CI/CD (GitHub Actions)
+
+- Workflow `.github/workflows/ci-cd.yml`: PR → `go build/vet/test` + `npm run build` (ubuntu-latest); push `main`/manual → mesmos checks e deploy no runner self-hosted (labels via var `RUNNER_LABELS`, default `self-hosted,linux,calculadora-graham`).
+- Deploy `.github/scripts/deploy.sh`: `git archive HEAD` → `$DEPLOY_DIR/releases/<sha>`, gera `backend/.env` dos secrets, `docker compose build` + `up -d --no-build --wait`, healthcheck `:8090/healthz` + `:5174`, rollback para `last_good_tag`. Não usa registry/SSH.
+- Invariantes: `COMPOSE_PROJECT_NAME` fixo em `calculadora-graham` (senão cria volumes novos e "perde" o banco); `image:` das services usa `${IMAGE_TAG:-latest}` (deploy usa o SHA); nunca `down -v`; não podar imagens usadas no rollback. `.env` nunca entra no `git archive` porque não é rastreado.
+- Schema: migrations são `CREATE/ALTER ... IF NOT EXISTS` no boot — rollback de imagem funciona com schema mais novo; não renomeie/remova colunas sem plano.
+- Secrets: `BRAPI_API_KEY` (obrigatório), `POSTGRES_PASSWORD` (opcional, default graham — em volume existente trocar exige `ALTER USER`), `BRAPI_URL`. Vars: `RUNNER_LABELS`, `DEPLOY_DIR`, `APP_URL`.
+
 ## Estado do repo
 
 - Sem git init, sem CI, sem front. `backend/data/` e `backend/.env` são gitignored.

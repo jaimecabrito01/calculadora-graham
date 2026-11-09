@@ -3,7 +3,7 @@ services:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: graham
-      POSTGRES_PASSWORD: graham
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-graham}
       POSTGRES_DB: graham
     ports:
       - "5433:5432" # host 5433 (5432 pode estar ocupado); dentro da rede é 5432
@@ -17,12 +17,13 @@ services:
 
   backend:
     build: ./backend
+    image: calculadora-graham-backend:${IMAGE_TAG:-latest}
     ports:
       - "8090:8080" # host 8090 (8080 ocupado na máquina)
     env_file: ./backend/.env
     environment:
       # dentro da rede do compose o PG é "db", não localhost
-      DATABASE_URL: postgres://graham:graham@db:5432/graham?sslmode=disable
+      DATABASE_URL: postgres://graham:${POSTGRES_PASSWORD:-graham}@db:5432/graham?sslmode=disable
       PORT: "8080"
       CVM_CACHE_DIR: /app/data
     volumes:
@@ -35,6 +36,7 @@ services:
 
   front:
     build: ./frontend
+    image: calculadora-graham-front:${IMAGE_TAG:-latest}
     ports:
       - "${FRONTEND_PORT:-5174}:80"
     depends_on:
